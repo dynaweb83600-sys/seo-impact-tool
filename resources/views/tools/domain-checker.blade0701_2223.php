@@ -375,25 +375,6 @@
             </template>
           </span>
         </th>
-		<th class="p-2 text-center whitespace-nowrap">
-  <span class="tip" x-data="{open:false, x:0, y:0}">
-    Visites/mois
-    <button type="button" x-ref="btn"
-      class="ml-1 inline-flex items-center justify-center w-5 h-5 rounded-full border text-xs text-gray-600 hover:bg-gray-100"
-      @mouseenter="open=true; const r=$refs.btn.getBoundingClientRect(); x=r.left+(r.width/2); y=r.bottom+10;"
-      @mouseleave="open=false"
-      @click="open=!open; const r=$refs.btn.getBoundingClientRect(); x=r.left+(r.width/2); y=r.bottom+10;">
-      ⓘ
-    </button>
-    <template x-teleport="body">
-      <div class="tip-bubble-fixed" x-cloak x-show="open"
-        :style="`left:${x}px; top:${y}px;`"
-        x-text="colHelp('visits_month')"
-        @mouseenter="open=true" @mouseleave="open=false"></div>
-    </template>
-  </span>
-</th>
-
 		
 		
 		
@@ -693,8 +674,7 @@
       <td class="p-2 text-center" x-text="row.organic_keywords ?? '—'"></td>
       <td class="p-2 text-center" x-text="row.traffic_etv !== null ? Number(row.traffic_etv).toFixed(2) : '—'"></td>
 
-	<td class="p-2 text-center" x-text="(() => { const v = (row.visits_month ?? (row.traffic_estimated != null ? Math.round(Number(row.traffic_estimated)) : null)); return (v === null || v === undefined || isNaN(v)) ? '—' : v;})()"></td>
-
+	
 		<!-- ✅ GSC cells -->
 	<td class="p-2 text-center" x-text="gsc.connected ? (row.gsc_clicks_30d ?? '—') : '—'"></td>
 
@@ -799,7 +779,7 @@
 
     <!-- ligne détails -->
     <tr class="border-b bg-gray-50" x-show="(row.seo_brief && row.seo_brief.length)" x-cloak>
-      <td class="p-3" colspan="30">
+      <td class="p-3" colspan="20">
         <div class="space-y-2">
           <template x-for="b in row.seo_brief" :key="b.title">
             <div class="border rounded-lg p-3 bg-white">
@@ -1014,6 +994,7 @@ document.addEventListener('alpine:init', () => {
   },
 	backlinksHelpOpen: false,
     poll: null,
+
 	backlinksLoading: false,
 	backlinksHtml: '',
 	backlinksDomain: '',
@@ -1414,8 +1395,6 @@ colHelp(key) {
     trend: "Tendance SEO calculée à partir de l’évolution récente des backlinks.",
 
     value: "Valeur SEO estimée du site basée sur son trafic organique.",
-	
-	visits_month: "Visites SEO estimées par mois (approx.). Si GSC est connecté, les clics GSC (30j) sont des visites réelles sur 30 jours.",
 
     content_pages: `
 	Pages SEO vs Articles
@@ -1670,51 +1649,69 @@ startPolling() {
 
 
 	async loadContentSuggestions(row) {
-  if (!row?.id) {
-    this.contentPanel.open = true;
-    this.contentPanel.loading = false;
-    this.contentPanel.error = "row.id manquant (API /api/reports ne renvoie pas id)";
-    return;
-  }
+	  console.log('ROW CLICK', row);
 
-  this.contentPanel.open = true;
-  this.contentPanel.loading = true;
-  this.contentPanel.error = null;
-  this.contentPanel.domain = row.domain;
-  this.contentPanel.pages = [];
-  this.contentPanel.articles = [];
+	  if (!row?.id) {
+		this.contentPanel.open = true;
+		this.contentPanel.loading = false;
+		this.contentPanel.error = "row.id manquant (API /api/reports ne renvoie pas id)";
+		return;
+	  }
 
-  try {
-    const url = `/api/report-items/${row.id}/content-suggestions?token=${encodeURIComponent(this.token)}`;
+	  this.contentPanel.open = true;
+	  this.contentPanel.loading = true;
+	  this.contentPanel.error = null;
+	  this.contentPanel.domain = row.domain;
+	  this.contentPanel.pages = [];
+	  this.contentPanel.articles = [];
 
-    const res = await fetch(url, {
-      headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-      credentials: 'same-origin',
-    });
+	  try {
+		//const url = `/api/report-items/${row.id}/content-suggestions?token=${this.token}`;
+		const score = this.authorityScoreNumber(row) ?? 1;
+		const url = `/api/report-items/${row.id}/backlinks-advice?token=${encodeURIComponent(this.token)}&authority=${score}`;
 
-    const ct = (res.headers.get('content-type') || '').toLowerCase();
-    const data = ct.includes('application/json') ? await res.json() : null;
-    if (!ct.includes('application/json')) {
-      const text = await res.text();
-      throw new Error(`Réponse non-JSON (${res.status}) : ${text.slice(0, 200)}`);
-    }
-    if (!res.ok) throw new Error(data?.message || `Erreur API (${res.status})`);
+		const res = await fetch(url);
+		
+		const ct = (res.headers.get('content-type') || '').toLowerCase();
+		let data = null;
 
-    const payload = data?.data ?? data;
+		if (ct.includes('application/json')) {
+		  data = await res.json();
+		} else {
+		  const text = await res.text();
+		  console.warn('Non-JSON response:', text.slice(0, 300));
+		  throw new Error(`Réponse non-JSON (${res.status}). Voir console.`);
+		}
 
-    this.contentPanel.pages = payload.pages || [];
-    this.contentPanel.articles = payload.articles || [];
+		console.log('CONTENT API RESPONSE', res.status, data);
 
-    if (!this.contentPanel.pages.length && !this.contentPanel.articles.length) {
-      this.contentPanel.error = "Aucune suggestion retournée par l’API (pages/articles vides).";
-    }
-  } catch (e) {
-    this.contentPanel.error = e?.message || 'Erreur';
-  } finally {
-    this.contentPanel.loading = false;
-  }
-}
-,
+		// Si API renvoie {pages:..., articles:...} ou {data:{pages:...}}
+		const payload = data?.data ?? data;
+
+		if (!res.ok) {
+		  throw new Error(payload?.message || `Erreur API (${res.status})`);
+		}
+
+		if (payload?.error) {
+		  throw new Error(payload.error);
+		}
+
+		this.contentPanel.pages = payload.pages || [];
+		this.contentPanel.articles = payload.articles || [];
+
+		// Si vide -> message explicite
+		if (!this.contentPanel.pages.length && !this.contentPanel.articles.length) {
+		  this.contentPanel.error = "Aucune suggestion retournée par l’API (pages/articles vides).";
+		}
+
+	  } catch (e) {
+		console.error('loadContentSuggestions error', e);
+		this.contentPanel.error = e?.message || 'Erreur';
+	  } finally {
+		this.contentPanel.loading = false;
+		console.log('contentPanel state', JSON.parse(JSON.stringify(this.contentPanel)));
+	  }
+	},
 	async generateSuggestion(suggestionId) {
 	  if (!suggestionId) return;
 

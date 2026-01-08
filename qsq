@@ -1,0 +1,96 @@
+[90m= [39m[34;4mGoogle\Service\SearchConsole\SearchAnalyticsQueryResponse[39;24m {#6111
+    +[1mresponseAggregationType[22m: "[32mbyProperty[39m",
+    +"[1mrows[22m": [
+      [34;4mGoogle\Service\SearchConsole\ApiDataRow[39;24m {#6110
+        +[1mclicks[22m: [35m0[39m,
+        +[1mctr[22m: [35m0[39m,
+        +[1mimpressions[22m: [35m0[39m,
+        +[1mkeys[22m: [
+          "[32m2025-12-09[39m",
+        ],
+        +[1mposition[22m: [35m0[39m,
+      },
+      [34;4mGoogle\Service\SearchConsole\ApiDataRow[39;24m {#6282
+        +[1mclicks[22m: [35m0[39m,
+        +[1mctr[22m: [35m0[39m,
+        +[1mimpressions[22m: [35m0[39m,
+        +[1mkeys[22m: [
+          "[32m2025-12-10[39m",
+        ],
+        +[1mposition[22m: [35m0[39m,
+      },
+      [34;4mGoogle\Service\SearchConsole\ApiDataRow[39;24m {#6310
+        +[1mclicks[22m: [35m0[39m,
+        +[1mctr[22m: [35m0[39m,
+        +[1mimpressions[22m: [35m0[39m,
+        +[1mkeys[22m: [
+          "[32m2025-12-11[39m",
+        ],
+        +[1mposition[22m: [35m0[39m,
+      },
+      [34;4mGoogle\Service\SearchConsole\ApiDataRow[39;24m {#6280
+        +[1mclicks[22m: [35m0[39m,
+        +[1mctr[22m: [35m0[39m,
+        +[1mimpressions[22m: [35m0[39m,
+        +[1mkeys[22m: [
+          "[32m2025-12-12[39m",
+        ],
+        +[1mposition[22m: [35m0[39m,
+      },
+      [34;4mGoogle\Service\SearchConsole\ApiDataRow[39;24m {#6109
+        +[1mclicks[22m: [35m0[39m,
+        +[1mctr[22m: [35m0[39m,
+        +[1mimpressions[22m: [35m0[39m,
+        +[1mkeys[22m: [
+          "[32m2025-12-13[39m",
+        ],
+        +[1mposition[22m: [35m0[39m,
+      },
+      [34;4mGoogle\Service\SearchConsole\ApiDataRow[39;24m {#6108
+        +[1mclicks[22m: [35m0[39m,
+        +[1mctr[22m: [35m0[39m,
+        +[1mimpressions[22m: [35m0[39m,
+        +[1mkeys[22m: [
+          "[32m2025-12-14[39m",
+        ],
+        +[1mposition[22m: [35m0[39m,
+      },
+      [34;4mGoogle\Service\SearchConsole\ApiDataRow[39;24m {#6107
+        +[1mclicks[22m: [35m0[39m,
+        +[1mctr[22m: [35m0[39m,
+        +[1mimpressions[22m: [35m0[39m,
+        +[1mkeys[22m: [
+          "[32m2025-12-15[39m",
+        ],
+        +[1mposition[22m: [35m0[39m,
+      },
+      [34;4mGoogle\Service\SearchConsole\ApiDataRow[39;24m {#6106
+        +[1mclicks[22m: [35m0[39m,
+        +[1mctr[22m: [35m0[39m,
+        +[1mimpressions[22m: [35m0[39m,
+        +[1mkeys[22m: [
+          "[32m2025-12-16[39m",
+        ],
+        +[1mposition[22m: [35m0[39m,
+      },
+      [34;4mGoogle\Service\SearchConsole\ApiDataRow[39;24m {#6105
+        +[1mclicks[22m: [35m0[39m,
+        +[1mctr[22m: [35m0[39m,
+        +[1mimpressions[22m: [35m0[39m,
+        +[1mkeys[22m: [
+          "[32m2025-12-17[39m",
+        ],
+        +[1mposition[22m: [35m0[39m,
+      },
+      [34;4mGoogle\Service\SearchConsole\ApiDataRow[39;24m {#6104
+        +[1mclicks[22m: [35m0[39m,
+        +[1mctr[22m: [35m0[39m,
+        +[1mimpressions[22m: [35m0[39m,
+        +[1mkeys[22m: [
+          "[32m2025-12-18[39m",
+        ],
+        +[1mposition[22m: [35m0[39m,
+      },
+    ],
+  }
+

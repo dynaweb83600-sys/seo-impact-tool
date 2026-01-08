@@ -4,98 +4,95 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\ReportItem;
+use Illuminate\Http\Request;
 use App\Services\Content\OpenAIResponsesClient;
 
 class ReportItemBacklinksController extends Controller
 {
-public function show(ReportItem $item, OpenAIResponsesClient $openai)
-{
-	
-	\Log::info('BacklinksAdvice DEBUG', [
-    'route' => request()->path(),
-    'item_id' => $item->id,
-    'domain' => $item->domain,
-    'authority_final' => $item->authority_final,
-    'da' => $item->da,
-]);
+	public function show(Request $request, ReportItem $item, OpenAIResponsesClient $openai)
+	{
+		// ✅ token check
+		$token = (string) $request->query('token');
+		$report = $item->report; // assure-toi d'avoir la relation report()
 
-	
-    // ✅ 1) Autorité : même logique que le tableau
-    $authority = (int) (
-        $item->authority_final
-        ?? $item->da
-        ?? 0
-    );
+		if (!$token || !$report || $token !== $report->access_token) {
+			return response()->json(['message' => 'Unauthorized'], 401);
+		}
 
-    // ✅ 2) Metrics de base
-    $rd = (int) ($item->linking_domains ?? 0);
-    $bl = (int) ($item->inbound_links ?? 0);
+		// ✅ authority (default 0 pour activer fallback)
+		$authority = (int) $request->query('authority', 0);
 
-    // ✅ 3) Visites : tu stockes traffic_estimated
-    $visits = (int) (
-        $item->traffic_estimated
-        ?? 0
-    );
+		if ($authority <= 0) {
+			// fallback...
+		}
 
-    // ✅ 4) ETV en €/mois
-    $etv = number_format((float) ($item->traffic_etv ?? 0), 2, '.', '');
+		$rd = (int) ($item->linking_domains ?? 0);
+		$bl = (int) ($item->inbound_links ?? 0);
 
-    $prompt = "<<<PROMPT
-Tu es un expert SEO.
+		//$traffic = number_format((float) ($item->traffic_estimated ?? 0), 0, '.', '');
+		
+		
+		$trafficVisits = null;
 
-IMPORTANT :
-- ETV = valeur estimée du trafic en € / mois (pas des visites).
-- Le trafic SEO estimé est en visites / mois.
-- Ne transforme JAMAIS les nombres.
+		// 1) GSC clicks (30j) si dispo
+		if ($item->gsc_clicks_30d !== null) {
+			$trafficVisits = (int) $item->gsc_clicks_30d;
+		}
+		// 2) sinon, fallback sur traffic_estimated si tu l’utilises vraiment
+		elseif ($item->traffic_estimated !== null) {
+			$trafficVisits = (int) round((float) $item->traffic_estimated);
+		}
+		// 3) sinon, fallback sur traffic_etv (DataForSEO, ton "visites/mois estimées")
+		elseif ($item->traffic_etv !== null) {
+			$trafficVisits = (int) round((float) $item->traffic_etv);
+		}
 
-Analyse les données suivantes pour un site e-commerce
-et produis un diagnostic clair et professionnel.
+		$traffic = $trafficVisits === null
+		? 'N/A'
+		: number_format($trafficVisits, 0, '.', '');
 
-Données :
-- Autorité du domaine : {$authority} / 100
-- Domaines référents : {$rd}
-- Backlinks : {$bl}
-- Trafic SEO estimé : {$visits} visites / mois
-- Valeur SEO (ETV) : {$etv} € / mois
-- Type de site : e-commerce
+		$etv     = number_format((float) ($item->traffic_etv ?? 0), 2, '.', '');
 
-Structure OBLIGATOIRE de la réponse (en HTML) :
-- <h3>Analyse actuelle</h3>
-- <ul> avec les métriques
-- <h3>Faut-il obtenir des backlinks ?</h3>
-- <h3>Combien en obtenir</h3>
-- <h3>Pages à cibler</h3>
-- <h3>Rythme recommandé</h3>
-- <h3>Actions concrètes</h3>
+		$prompt = <<<PROMPT
+	Tu es un expert SEO.
 
-Contraintes :
-- HTML simple uniquement (h3, p, ul, li, strong)
-- Pas de markdown
-- Pas de noms d’outils
-- Ton clair, professionnel, pédagogique
-PROMPT;";
+	IMPORTANT :
+	- Trafic SEO estimé = nombre de visites mensuelles.
+	- ETV (Estimated Traffic Value) = valeur estimée en euros par mois (décimal).
+	- Ne transforme JAMAIS les nombres.
 
-    $html = $openai->generateHtml($prompt);
-    $html = preg_replace('/```html|```/i', '', $html);
+	Analyse les données suivantes pour un site e-commerce
+	et produis un diagnostic clair et professionnel.
 
-    //return response()->json(['html' => $html]);
-	return response()->json([
-    'debug' => [
-        'id'              => $item->id,
-        'domain'          => $item->domain,
-        'authority_final' => $item->authority_final,
-        'da'              => $item->da,
-        'linking_domains' => $item->linking_domains,
-        'inbound_links'   => $item->inbound_links,
-        'traffic_estimated' => $item->traffic_estimated,
-        'traffic_etv'     => $item->traffic_etv,
-        'raw_keys'        => is_array($item->raw_json ?? null) ? array_keys($item->raw_json) : null,
-    ],
-    'html' => $html,
-]);
+	Données :
+	- Autorité du domaine : {$authority} / 100
+	- Domaines référents : {$rd}
+	- Backlinks : {$bl}
+	- Trafic SEO estimé : {$trafficVisits} visites / mois
+	- Valeur trafic (ETV) : {$etv} €
+	- Type de site : e-commerce
 
-	
-}
+	Structure OBLIGATOIRE de la réponse (en HTML) :
+	- <h3>Analyse actuelle</h3>
+	- <ul> avec les métriques
+	- <h3>Faut-il obtenir des backlinks ?</h3>
+	- <h3>Combien en obtenir</h3>
+	- <h3>Pages à cibler</h3>
+	- <h3>Rythme recommandé</h3>
+	- <h3>Actions concrètes</h3>
+
+	Contraintes :
+	- HTML simple uniquement (h3, p, ul, li, strong)
+	- Pas de markdown
+	- Pas de noms d’outils
+	- Ton clair, professionnel, pédagogique
+	PROMPT;
+
+		$html = $openai->generateHtml($prompt);
+		$html = preg_replace('/```html|```/i', '', $html);
+
+		return response()->json(['html' => $html]);
+	}
 
 
 }

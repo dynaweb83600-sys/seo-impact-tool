@@ -17,11 +17,13 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-    ];
+	protected $fillable = [
+		'name',
+		'email',
+		'password',
+		'gsc_token_json',
+	];
+
 
     /**
      * The attributes that should be hidden for serialization.
@@ -38,11 +40,12 @@ class User extends Authenticatable
      *
      * @return array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+	protected $casts = [
+		'email_verified_at' => 'datetime',
+		'gsc_token_json' => 'array',
+		'gsc_connected' => 'boolean',
+	];
+
+
+
 }

@@ -11,31 +11,19 @@ class ReportItem extends Model
 	
 	
 	protected $casts = [
+		'content_suggestions' => 'array',
+		'raw_json' => 'array',
+		'top_anchors' => 'array',
+		'competitors' => 'array',
+		'domain_created_at' => 'date',
+		'domain_age_years' => 'float',
+		'traffic_etv' => 'float',
+		'ai_tooltips' => 'array',
+		'ai_diagnosis' => 'array',
+		'ai_details' => 'array',
 		'ai_generated_at' => 'datetime',
-		'traffic_estimated' => 'float',
-		'raw_json'           => 'array',
-        'top_anchors'        => 'array',
-        'ai_diagnosis'       => 'array',
-        'ai_details'         => 'array',
-        'ai_tooltips'        => 'array',
-        'content_suggestions'=> 'array',
-        'competitors'        => 'array',
-        'seed_keywords'      => 'array',
-        'topic_profile'      => 'array',
-
-        // dates
-        'domain_created_at'  => 'datetime',
-        'gsc_updated_at'     => 'datetime',
-
-        // numériques
-        'domain_age_years'       => 'float',
-        'traffic_etv'            => 'float',
-        'authority_final'        => 'float',
-
-        'gsc_clicks_30d'      => 'integer',
-        'gsc_impressions_30d' => 'integer',
-        'gsc_position_30d'    => 'float',
-		
+	    'seed_keywords' => 'array',
+		'topic_profile' => 'array',
 	];
 
 
@@ -182,6 +170,10 @@ class ReportItem extends Model
 		return $this->belongsTo(\App\Models\Report::class);
 	}
 
-
+	  // ✅ alias attendu par le controller / query
+    public function reportItem(): BelongsTo
+    {
+        return $this->belongsTo(ReportItem::class, 'report_item_id');
+    }
 
 }

@@ -41,4 +41,11 @@ class PageAnalyzerService
             ]
         );
     }
+	
+	public function populateFromRankedKeywords(\App\Models\ReportItem $ri, array $rkBody): void
+	{
+		// TODO: implémenter plus tard
+		return;
+	}
+
 }

@@ -17,21 +17,70 @@ class DataForSeoClient
         $this->password = (string) config('services.dataforseo.password');
     }
 
-    protected function post(string $path, array $payload): array
-    {
-        $endpoint = rtrim($this->baseUrl, '/') . '/' . ltrim($path, '/');
+protected function post(string $path, array $payload): array
+{
+    $endpoint = rtrim($this->baseUrl, '/') . '/' . ltrim($path, '/');
 
+    try {
         $res = Http::withBasicAuth($this->login, $this->password)
             ->acceptJson()
             ->asJson()
+            ->timeout(30)
+            ->retry(2, 500)
             ->post($endpoint, $payload);
 
-        return $res->json() ?? [
-            'error' => true,
+        $json = $res->json();
+
+        if (!$res->successful()) {
+            logger()->error('DataForSEO HTTP error', [
+                'path' => $path,
+                'status' => $res->status(),
+                'body' => $res->body(),
+                'json' => $json,
+            ]);
+
+            return [
+                'ok' => false,
+                'http_status' => $res->status(),
+                'json' => $json,
+                'raw' => $res->body(),
+            ];
+        }
+
+        // ✅ DataForSEO renvoie aussi des erreurs "logiques" avec HTTP 200
+        // ex: tasks_error > 0
+        if (is_array($json) && (($json['tasks_error'] ?? 0) > 0)) {
+            logger()->error('DataForSEO tasks_error', [
+                'path' => $path,
+                'json' => $json,
+            ]);
+
+            return [
+                'ok' => false,
+                'http_status' => $res->status(),
+                'json' => $json,
+            ];
+        }
+
+        return [
+            'ok' => true,
             'http_status' => $res->status(),
-            'raw' => $res->body(),
+            'json' => $json,
+        ];
+    } catch (\Throwable $e) {
+        logger()->error('DataForSEO exception', [
+            'path' => $path,
+            'message' => $e->getMessage(),
+        ]);
+
+        return [
+            'ok' => false,
+            'exception' => true,
+            'message' => $e->getMessage(),
         ];
     }
+}
+
 
     /** Backlinks Summary */
     public function backlinksSummary(string $domain): array
